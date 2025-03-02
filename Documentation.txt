@@ -7,6 +7,18 @@ Steps for Setting Up the Project Infrastructure
 *******************************************
 1. VPC Creation
 Design and create a Virtual Private Cloud (VPC) to serve as the foundation for the project infrastructure.
+create a vpc with any name
+IPv4 CIDR block = 192.168.0.0/22
+Number of Availability Zones (AZs) = 2
+Number of public subnets = 2
+Number of private subnets = 4
+NAT gateways = in 1 AZ
+VPC endpoints = none
+
+once created, change vpc and subnets names accordingly.
+
+now create 5 SG for external LB, web tier , internal LB, app tier, DB tier
+
 
 2. S3 Bucket and IAM Role Setup
 Create an S3 bucket and upload the application code.
