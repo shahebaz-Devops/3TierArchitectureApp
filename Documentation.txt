@@ -26,14 +26,25 @@ now create 5 SG for external LB, web tier , internal LB, app tier, DB tier
 
 
 2. S3 Bucket and IAM Role Setup
-Create an S3 bucket and upload the application code.
+Create an S3 bucket download application code from git-hub and upload the application code.
 Set up an IAM role with the necessary permissions and attach it to the EC2 instance.
+create a role i.e AmazonEC2RoleforSSM so that servers in private subnet can communicate with each other.
 
 3. Database Configuration
 Launch and configure an RDS instance to serve as the backend database.
+fisrt create the subnet group from RDS for our custom VPC and select AZ 1a and 1b and select both DB subnet and create.
+now create MYSQL engine database and select mysql version is 8.0.35 and templates is free tier , select custome VPC,
+uncheck db backup and create database.
+$ sudo -i
+# cd /home/ec2-user/
+ # ping 8.8.8.8    (its pingalbe bcoz of NAT GATEWAY)
+
 
 4. Application Tier Setup
 Deploy application-tier resources, including the configuration of an internal load balancer for traffic distribution within the tier.
+create one ec2 instance with amazon linux ami , amazon image is amazon linux 2.
+select our custom vpc and private-app-1 subnet and select app-SG.
+goto advance and select created ssm role with instace and launch.
 
 5. Web Tier Setup
 Provision web-tier resources and set up an external load balancer to manage incoming traffic from users.
@@ -106,6 +117,7 @@ exit (You will see 'ec2-user' at the end of command line and at the beginning of
 
 Update Application Configuration to with DB information
 Update the **application-code/app-tier/DbConfig.js** file with your database credentials.
+make changes into DbConfig.js file according to host , user and password of DB and then upload that file into s3 bucket.
 
 Install and Configure Node.js and PM2
 curl -o- https://raw.githubusercontent.com/avizway1/aws_3tier_architecture/main/install.sh | bash
@@ -121,9 +133,9 @@ npm install -g pm2 (You will see 'found 0 vulnerabilities)
 
 Download application code from S3 and start the application
 cd ~/ 
-sudo aws s3 cp s3://<S3BucketName>/application-code/app-tier/ app-tier --recursive
+sudo aws s3 cp s3://demo-3tier-project1234/application-code/app-tier/ app-tier --recursive
 
-Ex: sudo aws s3 cp s3://demo-3tier-project/application-code/app-tier/ app-tier --recursive
+Ex: sudo aws s3 cp s3://demo-3tier-project1234/application-code/app-tier/ app-tier --recursive
 
 ls ---> You will see 'app-tier' folder
 
@@ -150,6 +162,21 @@ With this we have completed the application configuration.
 
 4.2. Creation of Internal Load Balancer for App Tier
 
+Now create loadbalancer for internal, first create target group 
+TG name = App-internal-TG
+Protocol : Port = http and port = 4000
+select our custom VPC
+Health check path will be = /health
+now include app-tier instance with TG and create target group
+
+create loadbalaner
+Load balancer name = app-internal-LB
+Scheme = internal
+select our custom VPC
+Availability Zones and subnets are both AZ 1a and 1b and select APP subnet 1 and 2
+Security groups = internal-LB-SG
+Protocol http , port 80 and select TG and create LB.
+
 Goto the downloaded code folder in local system ----> Open nginx.conf file and in the end of the file you will see something like below;
         #proxy for internal lb
         location /api/{
@@ -165,6 +192,15 @@ This one we are going to copy to the webserver in sometime.
 ~~~~~~~~~~~
 Step 5
 ~~~~~~~~~~~
+create one ec2 instance for web tier
+name = web-tier
+select amazon os and ami is amazon 2
+dont chose key pair
+select our custom vpc and subnet will public web-tier
+and enable pulic ip for it
+select SG web-SG not web-ALB-SG
+IAM instance profile = select create role of SSM and launch instance.
+
 Creation of Web tier resources including External Load Balancer
 
 sudo -su ec2-user (To work as an ec2-user)    
@@ -177,7 +213,7 @@ nvm install 16
 nvm use 16
 
 aws s3 cp s3://<S3 Bucker Name>/application-code/web-tier/ web-tier --recursive
-Ex: aws s3 cp s3://demo-3tier-project/application-code/web-tier/ web-tier --recursive
+Ex: aws s3 cp s3://demo-3tier-project1234/application-code/web-tier/ web-tier --recursive
 
 ls ----> You will see 'web-tier'
 
@@ -193,14 +229,19 @@ ls ----> You will see 'nginx.conf' file
 
 sudo rm nginx.conf
 sudo aws s3 cp s3://<S3 Bucker Name>/application-code/nginx.conf .
-Ex: sudo aws s3 cp s3://demo-3tier-project/application-code/nginx.conf .
+Ex: sudo aws s3 cp s3://demo-3tier-project1234/application-code/nginx.conf .
 sudo service nginx restart
 
 chmod -R 755 /home/ec2-user
 
 sudo chkconfig nginx on
 
-To check the output of the App, we can check using the Web-Tier-Instance public IP. But before checking lets open port no 80 with http, Anywhere IPv4, 0.0.0.0/0 ---> Save rules ----> Now paste the pubic ip of Web-Tier-Instance in new tab of browser ----> You will see the app ----> Enter the data in the app
+To check the output of the App, we can check using the Web-Tier-Instance public IP. But before checking lets open port no 80 with http, Anywhere IPv4, 0.0.0.0/0 ---> Save rules ----> Now paste the pubic ip of Web-Tier-Instance in new tab of browser ----> You will see the app ----> Enter the data in the app and check in DB 
+
+now to access the application through Route53
+create TG for external LB and create LB.
+attach certificate to LB 
+Create Route53 and create a record for LB DNS and now access the application through Route53.
 
 
 This is about 3 tier architecture with HA and Fault Tolerance.
