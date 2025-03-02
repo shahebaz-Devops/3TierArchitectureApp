@@ -18,6 +18,11 @@ VPC endpoints = none
 once created, change vpc and subnets names accordingly.
 
 now create 5 SG for external LB, web tier , internal LB, app tier, DB tier
+1st SG is web-ALB and allow http and ssh traffic
+2nd SG is WEB-SG and allow http traffic for custom and allow traffic from web-ALB SG and add one more rule and http and custom and allow traffic from 192.168.0.0/22 this CIDR only so that it will be accesible from within VPC only.
+3rd SG is APP-SG and allow 4000 port in SG and source will be from 192.168.0.0/22 this CIDR, were allowing 4000 port bcoz our react application code is running on port 4000.
+4th SG is INTERNAL-LB-SG and allow http traffic for custom for this CIDR 192.168.0.0/22.
+5th SG is RDS-SG and allow 3306 port and in source custom for this CIDR 192.168.0.0/22.
 
 
 2. S3 Bucket and IAM Role Setup
