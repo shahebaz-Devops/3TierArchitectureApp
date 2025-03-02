@@ -241,8 +241,10 @@ To check the output of the App, we can check using the Web-Tier-Instance public 
 now to access the application through Route53
 create TG for external LB and create LB.
 attach certificate to LB 
-Create Route53 and create a record for LB DNS and now access the application through Route53.
-
+Rgistred one domain in Route53 and create a record for external LB and add the external LB DNS name.
+goto ACM and create one certificate with registered domain.
+goto LB and add the listner for 443 port and attach the certificate from ACM option.
+now browse the DNS name to aceess the application.
 
 This is about 3 tier architecture with HA and Fault Tolerance.
 
